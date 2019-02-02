@@ -88,9 +88,15 @@ end
 
 class Player
   attr_reader :marker
+  attr_writer :turn
 
   def initialize(marker)
     @marker = marker
+    @turn = false
+  end
+
+  def turn?
+    @turn
   end
 end
 
@@ -103,6 +109,10 @@ class TTTGame
     @board = Board.new
     @human = Player.new(HUMAN_MARKER)
     @computer = Player.new(COMPUTER_MARKER)
+  end
+
+  def initialize_current_player(player)
+    player.turn = true
   end
 
   def display_welcome_message
@@ -179,19 +189,32 @@ class TTTGame
     clear_screen
   end
 
+  def current_player_moves
+    if human.turn?
+      human_moves
+    elsif computer.turn?
+      computer_moves
+    end
+  end
+
+  def alternate_player
+    [@human, @computer].each do |player|
+      player.turn = !player.turn?
+    end
+  end
+
   def play
     clear_screen
     display_welcome_message
+    initialize_current_player(human)
 
     loop do 
       display_board
       loop do
-        human_moves
+        current_player_moves
         break if board.someone_won? || board.full?
-
-        computer_moves
-        break if board.someone_won? || board.full?
-        clear_screen_and_display_board
+        alternate_player
+        clear_screen_and_display_board if human.turn?
       end
       display_result
       break unless play_again?
